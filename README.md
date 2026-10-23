@@ -111,4 +111,3 @@ The action store and audit log are kept in `globalThis` to survive hot reloads, 
 
 The `send_email`, `db_query`, and `fetch_url` tools are simulated for the demo. Integrating real SMTP or database connections can be done through the `ToolHandlers` registry.
 
-MIT
