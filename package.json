@@ -1,0 +1,8 @@
+{
+  "name": "wall-a",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
