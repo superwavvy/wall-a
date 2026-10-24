@@ -15,3 +15,11 @@ export function generateHash(obj: any): string {
   const canonicalString = canonicalize(obj);
   return crypto.createHash('sha256').update(canonicalString).digest('hex');
 }
+
+// Mask email addresses for the audit log
+export function maskSensitiveData(str: string) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, (match, user, domain) => {
+    return user[0] + '***@' + domain;
+  });
+}
