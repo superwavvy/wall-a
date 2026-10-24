@@ -168,7 +168,7 @@ export async function evaluateAction(agentInput: AgentContext, action: ActionReq
     await auditLogger.log('AGENT_TAINTED', key, { reason: 'Fetched untrusted URL' });
   }
 
-  const row = {
+  const row: any = {
     id: actionId,
     agent_id: agent.agentId,
     tool_name: action.toolName,
@@ -179,6 +179,10 @@ export async function evaluateAction(agentInput: AgentContext, action: ActionReq
     reason: taintsSession ? 'Allowed — session now TAINTED' : policyResult.reason,
     expires_at: new Date(Date.now() + APPROVAL_TTL_MS).toISOString(),
   };
+  
+  if (!isDbEnabled) {
+    row.sequence = incrementSeq();
+  }
 
   if (isDbEnabled) {
     // `sequence` is filled in by the database (see the migration).

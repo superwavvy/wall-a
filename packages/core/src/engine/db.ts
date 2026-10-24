@@ -1,20 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export const isDbEnabled = !!(supabaseUrl && supabaseKey);
 
-export const supabase = isDbEnabled 
-  ? createClient(supabaseUrl, supabaseKey) 
+if (!isDbEnabled && process.env.NODE_ENV === 'production') {
+  console.warn('WALL-A: no database configured. Falling back to in-memory storage, which does not persist on serverless.');
+}
+
+export const supabase = isDbEnabled
+  ? createClient(supabaseUrl as string, supabaseKey as string, { auth: { persistSession: false } })
   : null;
 
-// In-memory fallback for local testing without Supabase
-const globalForDb = globalThis as unknown as { 
-  actionMemory: Map<string, any>, 
+const globalForDb = globalThis as unknown as {
+  actionMemory: Map<string, any>,
   agentMemory: Map<string, any>,
   auditMemory: any[],
-  seqCounter: number 
+  seqCounter: number
 };
 
 export const actionMemory = globalForDb.actionMemory || new Map();

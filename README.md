@@ -106,7 +106,7 @@ Generate a secure admin token with:
 node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"
 ```
 
-The interactive `/demo` page does not use the admin token. It approves through a restricted `/api/demo/approve` route that only works for the demo agents.
+The interactive `/demo` page does not use the admin token. It approves through a restricted `/api/demo` route that only works for the demo agents.
 
 ## Known Limitations
 
