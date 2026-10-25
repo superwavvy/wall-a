@@ -1,29 +1,22 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { executeAction } from '@wall-a/core';
+import { keyFromRequest, lookupKey } from '../../../../lib/agent-keys';
 
+// Only the action id comes from the body. Identity comes from the key.
 const ExecuteSchema = z.object({
-  agentId: z.string().min(1).max(64),
   actionId: z.string().uuid(),
 });
 
-const ClientIdSchema = z.string().min(1).max(64).regex(/^[A-Za-z0-9_-]+$/);
-
 export async function POST(req: Request) {
   try {
-    const clientId = ClientIdSchema.safeParse(req.headers.get('x-client-id'));
-    if (!clientId.success) {
-      return NextResponse.json({ error: 'Missing or invalid x-client-id' }, { status: 400 });
-    }
+    const who = await lookupKey(keyFromRequest(req));
+    if (!who) return NextResponse.json({ error: 'Invalid or missing API key' }, { status: 401 });
 
-    const body = await req.json().catch(() => null);
-    const parsed = ExecuteSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid request format' }, { status: 400 });
-    }
+    const parsed = ExecuteSchema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return NextResponse.json({ error: 'Invalid request format' }, { status: 400 });
 
-    const { agentId, actionId } = parsed.data;
-    const result = await executeAction(agentId, actionId, { clientId: clientId.data });
+    const result = await executeAction(who.agentId, parsed.data.actionId, { clientId: who.clientId });
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
     const status = error?.statusCode ?? 500;
