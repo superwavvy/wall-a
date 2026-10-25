@@ -17,9 +17,15 @@ export async function lookupKey(raw: string | null) {
   if (!isDbEnabled || !supabase) return null;
   const { data, error } = await supabase
     .from('agent_keys')
-    .select('client_id, agent_id, permissions, revoked_at')
+    .select('id, client_id, agent_id, permissions, revoked_at, last_used_at')
     .eq('key_hash', hashKey(raw))
     .maybeSingle();
   if (error || !data || data.revoked_at) return null;
+
+  // Record "last used" at most once a minute. Best effort: a failure never blocks the call.
+  const last = data.last_used_at ? new Date(data.last_used_at).getTime() : 0;
+  if (Date.now() - last > 60_000) {
+    try { await supabase.from('agent_keys').update({ last_used_at: new Date().toISOString() }).eq('id', data.id); } catch {}
+  }
   return { clientId: data.client_id as string, agentId: data.agent_id as string, permissions: data.permissions as string[] };
 }
