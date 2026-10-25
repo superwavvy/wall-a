@@ -14,7 +14,7 @@ body {
 .term {
   --g: #ff6a13;
   --g-dim: #ffc9a0;
-  --g-mute: #a8693f;
+  --g-mute: #c4885a;
   --bg: #0a0604;
   --line: rgba(255, 106, 19, 0.28);
   --amber: #ffd60a;
@@ -187,4 +187,9 @@ body {
   --color-blue-950: #2a0e02;
   --color-fuchsia-950: #2a0e02;
 }
-.term header, .term header * { white-space: nowrap; }
+
+/* wa-term-fix */
+.term header a, .term header button, .term header span { white-space: nowrap; }
+.term { overflow-x: clip; max-width: 100%; }
+.term p, .term h1, .term h2, .term div { overflow-wrap: anywhere; }
+body:has(.term) { background: #0a0604; }
