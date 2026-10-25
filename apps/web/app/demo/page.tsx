@@ -116,11 +116,12 @@ export default function AttackDemo() {
   const locked = running || result === "PENDING";
 
   return (
-    <main className="min-h-screen bg-[#050505] text-zinc-300 font-mono text-sm p-4 flex flex-col">
+    <main className="term p-4 flex flex-col">
       <div className="max-w-2xl mx-auto w-full space-y-6 mt-4">
         <header className="flex justify-between items-start mb-2">
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-widest uppercase">Attack Simulation</h1>
+            <div className="t-muted text-xs">wall-a@firewall:~$ ./simulate --attack</div>
+            <h1 className="t-title uppercase">Attack Simulation</h1>
             <p className="text-zinc-400 text-xs mt-1">Multi-Vector Security Testing</p>
           </div>
           <button onClick={resetDemo} className="border border-zinc-600 text-zinc-300 px-3 py-2 text-xs hover:bg-zinc-800">RESET</button>
@@ -131,9 +132,9 @@ export default function AttackDemo() {
             <div className="text-[11px] text-red-500 uppercase">Leaked</div>
             <div className="text-xl font-bold text-red-400">{score.leaked}</div>
           </div>
-          <div className="border border-cyan-500/30 bg-cyan-500/5 p-2 text-center">
-            <div className="text-[11px] text-cyan-500 uppercase">Human Approved</div>
-            <div className="text-xl font-bold text-cyan-400">{score.approved}</div>
+          <div className="border border-orange-500/30 bg-orange-500/5 p-2 text-center">
+            <div className="text-[11px] text-orange-500 uppercase">Human Approved</div>
+            <div className="text-xl font-bold text-orange-400">{score.approved}</div>
           </div>
           <div className="border border-emerald-500/30 bg-emerald-500/5 p-2 text-center">
             <div className="text-[11px] text-emerald-500 uppercase">Blocked</div>
@@ -167,7 +168,7 @@ export default function AttackDemo() {
                 key={s.id}
                 disabled={running}
                 onClick={() => { setSelectedScenario(s.id); setPendingActionId(null); setResult(null); setLogs([]); }}
-                className={`text-xs px-2 py-3 min-h-[48px] border text-center ${selectedScenario === s.id ? "border-cyan-500 text-cyan-300 bg-cyan-500/10" : "border-zinc-700 text-zinc-300"}`}
+                className={`text-xs px-2 py-3 min-h-[48px] border text-center ${selectedScenario === s.id ? "border-orange-500 text-orange-300 bg-orange-500/10" : "border-zinc-700 text-zinc-300"}`}
               >
                 {s.name}
               </button>
@@ -195,7 +196,7 @@ export default function AttackDemo() {
         {result && result !== "PENDING" && (
           <div className={`p-4 border text-center font-bold tracking-widest text-lg ${
             result === "LEAKED" ? "border-red-500/50 bg-red-500/10 text-red-500" :
-            result === "EXECUTED" ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-500" :
+            result === "EXECUTED" ? "border-orange-500/50 bg-orange-500/10 text-orange-500" :
             "border-emerald-500/50 bg-emerald-500/10 text-emerald-500"
           }`}>
             {result === "LEAKED" ? "⛔ ATTACK SUCCEEDED" : result === "EXECUTED" ? "✅ ACTION EXECUTED" : "🛡️ ATTACK BLOCKED"}
@@ -204,7 +205,7 @@ export default function AttackDemo() {
 
         <div className="flex gap-4">
           <Link href="/" className="flex-1 border border-zinc-700 text-center py-3 text-zinc-300 hover:bg-zinc-900">[ Back ]</Link>
-          <button onClick={() => runAttack("init")} disabled={locked} className={`flex-1 border py-3 font-bold ${locked ? "border-zinc-800 text-zinc-600" : "border-white text-black bg-white hover:bg-zinc-200"}`}>{running ? "RUNNING..." : "EXECUTE"}</button>
+          <button onClick={() => runAttack("init")} disabled={locked} className={`flex-1 border py-3 font-bold ${locked ? "border-zinc-800 text-zinc-600" : "border-orange-500 text-black bg-orange-500 hover:bg-orange-400"}`}>{running ? "RUNNING..." : "EXECUTE"}</button>
         </div>
       </div>
     </main>
