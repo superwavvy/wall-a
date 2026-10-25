@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import TaintPanel from "./TaintPanel";
 
 type KeyRow = { id: string; agent_id: string; permissions: string[]; created_at: string; last_used_at: string | null };
 
@@ -144,6 +145,8 @@ export default function Connect() {
           ))}
           <p className="text-xs text-zinc-500">Revoking stops that link working immediately and frees a slot.</p>
         </section>
+
+        <TaintPanel />
 
         <Link href="/" className="block text-center text-sm text-zinc-400 underline">Back to dashboard</Link>
       </div>
