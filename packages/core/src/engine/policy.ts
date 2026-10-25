@@ -1,9 +1,16 @@
 import { AgentContext, ActionRequest, PolicyResult } from '../types/index';
 import { calculateRisk } from './risk';
+import { findSecret } from './secrets';
 
 export function evaluatePolicy(agent: AgentContext, action: ActionRequest): PolicyResult {
   if (!agent.permissions.includes(action.toolName)) {
     return { decision: 'BLOCK', matchedRule: 'AGENT_PERMISSION', reason: `No permission for ${action.toolName}` };
+  }
+
+  // Block secrets in parameters (the reason names the kind, never the value)
+  const secretKind = findSecret(action.parameters);
+  if (secretKind) {
+    return { decision: 'BLOCK', matchedRule: 'SECRET_IN_PARAMETERS', reason: `Parameters contain what looks like a secret (${secretKind}).` } as any;
   }
 
   // Block destructive SQL

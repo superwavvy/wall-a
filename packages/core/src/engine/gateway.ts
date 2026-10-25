@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { AgentContext, ActionRequest } from '../types/index';
 import { evaluatePolicy } from './policy';
+import { findSecret, redactSecrets } from './secrets';
 import { calculateRisk } from './risk';
 import { generateHash, maskSensitiveData } from './crypto';
 import { ToolHandlers } from '../tools/handlers';
@@ -148,7 +149,7 @@ export async function evaluateAction(agentInput: AgentContext, action: ActionReq
 
   const row = {
     id: actionId, client_id: tenant, agent_id: agent.agentId, tool_name: action.toolName,
-    parameters: action.parameters, params_hash: paramsHash, status: initialStatus,
+    parameters: (findSecret(action.parameters) ? redactSecrets(action.parameters) : action.parameters) as any, params_hash: paramsHash, status: initialStatus,
     risk_score: risk.score, reason: taintsSession ? 'Allowed — session now TAINTED' : policyResult.reason,
     expires_at: new Date(Date.now() + APPROVAL_TTL_MS).toISOString(),
   };
