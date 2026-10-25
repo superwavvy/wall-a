@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import TaintPanel from "./TaintPanel";
+import PausePanel from "./PausePanel";
 
 type KeyRow = { id: string; agent_id: string; permissions: string[]; created_at: string; last_used_at: string | null };
 
@@ -147,6 +148,8 @@ export default function Connect() {
           ))}
           <p className="t-muted" style={{ fontSize: 12 }}>Revoking stops that link at once and frees a slot.</p>
         </section>
+
+        <PausePanel />
 
         <TaintPanel />
 

@@ -88,6 +88,13 @@ async function claim(actionId: string, from: string[], to: string, opts: { agent
   return true;
 }
 
+async function isWorkspacePaused(tenant: string): Promise<boolean> {
+  if (!isDbEnabled) return false;
+  const { data, error } = await supabase!.from('workspaces').select('paused').eq('client_id', tenant).maybeSingle();
+  if (error) return true; // fail closed: if we cannot read the switch, block
+  return !!data?.paused;
+}
+
 export async function evaluateAction(agentInput: AgentContext, action: ActionRequest, clientId?: string) {
   const tenant = cleanClientId(clientId);
   const sessionId = cleanSessionId((agentInput as any).sessionId);
@@ -117,7 +124,10 @@ export async function evaluateAction(agentInput: AgentContext, action: ActionReq
     }
   }
 
-  const policyResult = evaluatePolicy(agent, action);
+  const paused = await isWorkspacePaused(tenant);
+  const policyResult: any = paused
+    ? { decision: 'BLOCK', reason: 'Workspace is paused by its owner.' }
+    : evaluatePolicy(agent, action);
   const risk = calculateRisk(agent, action);
   const actionId = randomUUID();
 
@@ -199,6 +209,7 @@ export async function executeAction(agentId: string, actionId: string, opts: { c
   const action = await loadAction(actionId);
   if (!action) throw new HttpError('Action not found.', 404);
   if (opts.clientId !== undefined && action.clientId !== cleanClientId(opts.clientId)) throw new HttpError('Action not found.', 404);
+  if (await isWorkspacePaused(action.clientId)) throw new HttpError('Workspace is paused.', 423);
   if (action.agentId !== agentId) throw new HttpError('Unauthorized agent.', 403);
   if (action.status !== 'ALLOWED' && action.status !== 'APPROVED') throw new HttpError(`Cannot execute. Status is: ${action.status}`, 409);
   if (Date.now() > new Date(action.expiresAt).getTime()) {
