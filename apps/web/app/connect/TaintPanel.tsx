@@ -26,17 +26,20 @@ export default function TaintPanel() {
   };
 
   if (count === null) return null;
+  const tainted = count > 0;
   return (
-    <section className={`rounded-lg border p-3 ${count > 0 ? "border-amber-500/40 bg-amber-500/10" : "border-zinc-800 bg-zinc-900/50"}`}>
-      <div className="text-sm font-medium text-white">{count > 0 ? "Your agent is TAINTED" : "Agent context is clean"}</div>
-      <p className="mt-1 text-xs text-zinc-400 leading-relaxed">
-        {count > 0
-          ? "It read untrusted content (fetch_url), so risky actions are restricted. Clear this only when you start a fresh conversation."
-          : "No untrusted content has been read since the last clear."}
+    <section className={tainted ? "t-note-amber" : "t-card"}>
+      <div style={{ fontWeight: 700 }}>
+        {tainted ? "[ !! ] SESSION TAINTED" : "[ OK ] CONTEXT CLEAN"}
+      </div>
+      <p className={tainted ? "" : "t-muted"} style={{ fontSize: 12, marginTop: 4 }}>
+        {tainted
+          ? "Untrusted content was read (fetch_url). Risky actions are restricted. Clear only when you start a fresh conversation."
+          : "No untrusted content read since the last clear."}
       </p>
-      {count > 0 && (
-        <button onClick={clear} disabled={busy} className="mt-2 rounded-md border border-amber-500/50 px-3 py-2 text-xs text-amber-200 disabled:opacity-50">
-          {busy ? "Clearing..." : "Clear taint"}
+      {tainted && (
+        <button onClick={clear} disabled={busy} className="t-btn t-btn-sm t-btn-amber" style={{ marginTop: 8 }}>
+          {busy ? "clearing..." : "clear taint"}
         </button>
       )}
     </section>

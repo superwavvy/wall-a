@@ -179,6 +179,11 @@ function Skeleton({ className = "" }: { className?: string }) {
 }
 
 export default function Dashboard() {
+  useEffect(() => {
+    document.body.classList.add("term");
+    return () => document.body.classList.remove("term");
+  }, []);
+
   const [actions, setActions] = useState<Action[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [chainValid, setChainValid] = useState(true);
@@ -334,16 +339,16 @@ export default function Dashboard() {
       style={{
         fontFamily: "var(--font-inter), system-ui, sans-serif",
         background:
-          "radial-gradient(900px 420px at 50% -120px, rgba(99,91,255,0.22), transparent 70%), #0a0d1a",
+          "radial-gradient(900px 420px at 50% -120px, rgba(0,255,65,0.22), transparent 70%), #040a06",
       }}
     >
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0d1a]/80 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#040a06]/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
             <span
-              className="flex h-8 w-8 items-center justify-center rounded-lg shadow-[0_4px_14px_rgba(99,91,255,0.45)]"
-              style={{ background: "linear-gradient(180deg,#7a73ff,#635bff)" }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg shadow-[0_4px_14px_rgba(0,255,65,0.45)]"
+              style={{ background: "linear-gradient(180deg,#0f7a33,#0a5c26)" }}
             >
               <ShieldCheck className="h-4 w-4 text-white" />
             </span>
@@ -363,8 +368,8 @@ export default function Dashboard() {
             </Link>
             <Link
               href="/demo"
-              className="inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium text-white shadow-[0_4px_14px_rgba(99,91,255,0.35)] transition-opacity hover:opacity-90"
-              style={{ background: "linear-gradient(180deg,#7a73ff,#635bff)" }}
+              className="inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium text-white shadow-[0_4px_14px_rgba(0,255,65,0.35)] transition-opacity hover:opacity-90"
+              style={{ background: "linear-gradient(180deg,#0f7a33,#0a5c26)" }}
             >
               <Play className="h-3.5 w-3.5" /> Run demo
             </Link>
@@ -390,9 +395,9 @@ export default function Dashboard() {
             Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-28" />)
           ) : (
             <>
-              <Stat label="Total actions" value={actions.length} icon={Activity} tint="#635bff" className="col-span-2 sm:col-span-1" />
+              <Stat label="Total actions" value={actions.length} icon={Activity} tint="#0a5c26" className="col-span-2 sm:col-span-1" />
               <Stat label="Pending" value={pending.length} icon={Clock} tint="#fbbf24" />
-              <Stat label="Approved" value={approvedCount} icon={ShieldCheck} tint="#a5b4fc" />
+              <Stat label="Approved" value={approvedCount} icon={ShieldCheck} tint="#8dffaa" />
               <Stat label="Allowed" value={allowedCount} icon={ShieldCheck} tint="#38bdf8" />
               <Stat label="Blocked" value={blockedCount} caption="incl. rejected and expired" icon={Ban} tint="#fb7185" />
             </>
@@ -414,7 +419,7 @@ export default function Dashboard() {
 
             <div className="space-y-3">
               {pending.map((a) => (
-                <div key={a.actionId} className="rounded-xl border border-white/10 bg-[#0a0d1a]/70 p-4">
+                <div key={a.actionId} className="rounded-xl border border-white/10 bg-[#040a06]/70 p-4">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className={`text-sm font-semibold text-white ${MONO}`}>{a.toolName}</span>
                     <RiskBadge score={a.riskScore} />
@@ -428,8 +433,8 @@ export default function Dashboard() {
                     <button
                       onClick={() => requestAuthed({ kind: "decision", actionId: a.actionId, decision: "APPROVE" })}
                       disabled={busy}
-                      className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white shadow-[0_4px_14px_rgba(99,91,255,0.35)] transition-opacity hover:opacity-90 disabled:opacity-50 sm:flex-none"
-                      style={{ background: "linear-gradient(180deg,#7a73ff,#635bff)" }}
+                      className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white shadow-[0_4px_14px_rgba(0,255,65,0.35)] transition-opacity hover:opacity-90 disabled:opacity-50 sm:flex-none"
+                      style={{ background: "linear-gradient(180deg,#0f7a33,#0a5c26)" }}
                     >
                       Approve
                     </button>
@@ -635,7 +640,7 @@ export default function Dashboard() {
               <ol className="relative max-h-96 space-y-5 overflow-y-auto border-l border-white/10 pl-5">
                 {auditLogs.map((log) => (
                   <li key={log.entryHash} className="relative">
-                    <span className="absolute -left-[25px] top-1.5 h-2 w-2 rounded-full bg-indigo-400 ring-4 ring-[#0a0d1a]" />
+                    <span className="absolute -left-[25px] top-1.5 h-2 w-2 rounded-full bg-indigo-400 ring-4 ring-[#040a06]" />
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                       <span className="text-sm font-medium text-white">{EVENT_LABEL[log.event] ?? log.event}</span>
                       <span className={`text-[11px] text-slate-500 ${MONO}`}>{clock(log.timestamp)}</span>
@@ -668,7 +673,7 @@ export default function Dashboard() {
           <div
             role="dialog"
             aria-modal="true"
-            className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0f1426] p-5 shadow-2xl"
+            className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#08150e] p-5 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-base font-semibold text-white">
@@ -704,7 +709,7 @@ export default function Dashboard() {
                 onClick={confirmAuth}
                 disabled={!tokenInput.trim()}
                 className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white disabled:opacity-40"
-                style={{ background: "linear-gradient(180deg,#7a73ff,#635bff)" }}
+                style={{ background: "linear-gradient(180deg,#0f7a33,#0a5c26)" }}
               >
                 Confirm
               </button>

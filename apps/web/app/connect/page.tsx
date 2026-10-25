@@ -93,62 +93,64 @@ export default function Connect() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0b0b12] text-zinc-200 p-5">
-      <div className="max-w-xl mx-auto space-y-5 mt-6">
-        <h1 className="text-2xl font-semibold text-white">Connect your agent</h1>
-        <p className="text-sm text-zinc-400 leading-relaxed">
-          Create a private connector link and add it to Claude as a custom connector. Everything your agent does
-          shows up on your own dashboard.
-        </p>
+    <main className="term" style={{ padding: 20 }}>
+      <div style={{ maxWidth: 560, margin: "24px auto 0", display: "grid", gap: 20 }}>
+        <header>
+          <div className="t-muted" style={{ fontSize: 12 }}>wall-a@firewall:~$ connect --agent</div>
+          <h1 className="t-title">Connect your agent</h1>
+          <p className="t-muted" style={{ fontSize: 13, marginTop: 6 }}>
+            Create a private connector link and add it to Claude as a custom connector. Everything your agent does shows up on your own dashboard.
+          </p>
+        </header>
 
         {!url && (
-          <button onClick={create} disabled={busy} className="w-full rounded-lg bg-indigo-500 py-3 font-medium text-white disabled:opacity-50">
-            {busy ? "Creating..." : "Create connector link"}
+          <button onClick={create} disabled={busy} className="t-btn t-btn-solid">
+            {busy ? "creating..." : "> create connector link"}
           </button>
         )}
 
-        {error && <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-3 text-sm text-rose-300">{error}</div>}
+        {error && <div className="t-note-red" style={{ fontSize: 13 }}>[ ERR ] {error}</div>}
 
         {url && (
-          <div className="space-y-3">
-            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-200">
-              This link is shown once and works like a password. Copy it now, and don&apos;t share it.
+          <div style={{ display: "grid", gap: 12 }}>
+            <div className="t-note-amber" style={{ fontSize: 13 }}>
+              [ !! ] Shown once. Works like a password. Copy it now and don&apos;t share it.
             </div>
-            <div className="text-xs text-zinc-400">Agent: {agentId} · Tools: send_email, fetch_url, read_file</div>
-            <textarea readOnly value={url} rows={4} className="w-full rounded-lg border border-zinc-700 bg-black p-3 font-mono text-xs text-zinc-300 break-all" />
-            <button onClick={copy} className="w-full rounded-lg border border-zinc-600 py-3 text-white">{copied ? "Copied" : "Copy link"}</button>
-            <button onClick={() => { setUrl(null); setCopied(false); }} className="w-full rounded-lg py-2 text-sm text-zinc-400 underline">I&apos;ve saved it, hide the link</button>
+            <div className="t-muted" style={{ fontSize: 12 }}>agent: {agentId} | tools: send_email, fetch_url, read_file</div>
+            <textarea readOnly value={url} rows={4} className="t-field" />
+            <button onClick={copy} className="t-btn">{copied ? "[ copied ]" : "copy link"}</button>
+            <button onClick={() => { setUrl(null); setCopied(false); }} className="t-link" style={{ background: "none", border: 0, fontSize: 13, minHeight: 44 }}>
+              I&apos;ve saved it, hide the link
+            </button>
           </div>
         )}
 
-        <section className="space-y-2 pt-2">
-          <h2 className="text-sm font-medium text-white">Your connectors ({keys.length}/3)</h2>
-          {keys.length === 0 && <p className="text-sm text-zinc-500">No active connectors yet.</p>}
+        <section style={{ display: "grid", gap: 8 }}>
+          <h2 className="t-h2">## connectors [{keys.length}/3]</h2>
+          {keys.length === 0 && <p className="t-muted" style={{ fontSize: 13 }}>no active connectors.</p>}
           {keys.map((k) => (
-            <div key={k.id} className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="font-mono text-sm text-white">{k.agent_id}</div>
-                  <div className="text-xs text-zinc-400">Created {ago(k.created_at)} · Last used {ago(k.last_used_at)}</div>
-                  <div className="text-xs text-zinc-500">{k.permissions.join(", ")}</div>
-                </div>
-                {confirmId === k.id ? (
-                  <div className="flex gap-2 shrink-0">
-                    <button onClick={() => revoke(k.id)} className="rounded-md bg-rose-500 px-3 py-2 text-xs font-medium text-white">Confirm</button>
-                    <button onClick={() => setConfirmId(null)} className="rounded-md border border-zinc-600 px-3 py-2 text-xs text-zinc-300">Cancel</button>
-                  </div>
-                ) : (
-                  <button onClick={() => setConfirmId(k.id)} className="shrink-0 rounded-md border border-rose-500/50 px-3 py-2 text-xs text-rose-300">Revoke</button>
-                )}
+            <div key={k.id} className="t-card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ color: "var(--g)", fontWeight: 700 }}>{k.agent_id}</div>
+                <div className="t-muted" style={{ fontSize: 12 }}>created {ago(k.created_at)} | last used {ago(k.last_used_at)}</div>
+                <div className="t-muted" style={{ fontSize: 11 }}>{k.permissions.join(", ")}</div>
               </div>
+              {confirmId === k.id ? (
+                <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                  <button onClick={() => revoke(k.id)} className="t-btn t-btn-sm t-btn-red">confirm</button>
+                  <button onClick={() => setConfirmId(null)} className="t-btn t-btn-sm">cancel</button>
+                </div>
+              ) : (
+                <button onClick={() => setConfirmId(k.id)} className="t-btn t-btn-sm t-btn-red" style={{ flexShrink: 0 }}>revoke</button>
+              )}
             </div>
           ))}
-          <p className="text-xs text-zinc-500">Revoking stops that link working immediately and frees a slot.</p>
+          <p className="t-muted" style={{ fontSize: 12 }}>Revoking stops that link at once and frees a slot.</p>
         </section>
 
         <TaintPanel />
 
-        <Link href="/" className="block text-center text-sm text-zinc-400 underline">Back to dashboard</Link>
+        <Link href="/" className="t-link" style={{ textAlign: "center", fontSize: 13 }}>&lt; back to dashboard</Link>
       </div>
     </main>
   );
