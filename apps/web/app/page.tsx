@@ -356,6 +356,12 @@ export default function Dashboard() {
               live
             </span>
             <Link
+              href="/connect"
+              className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3.5 py-2 text-sm font-medium text-zinc-200 transition-colors hover:bg-white/5"
+            >
+              Connect agent
+            </Link>
+            <Link
               href="/demo"
               className="inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium text-white shadow-[0_4px_14px_rgba(99,91,255,0.35)] transition-opacity hover:opacity-90"
               style={{ background: "linear-gradient(180deg,#7a73ff,#635bff)" }}
