@@ -81,6 +81,11 @@ const EVENT_LABEL: Record<string, string> = {
 
 function getClientId() {
   if (typeof window === "undefined") return "default";
+  const ws = new URLSearchParams(window.location.search).get("ws");
+  if (ws && /^[A-Za-z0-9_-]{1,64}$/.test(ws)) {
+    localStorage.setItem("wall-a-client-id", ws);
+    window.history.replaceState(null, "", window.location.pathname);
+  }
   let id = localStorage.getItem("wall-a-client-id");
   if (!id) {
     id = crypto.randomUUID();
