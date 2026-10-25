@@ -5,10 +5,6 @@ export const ToolRegistry = {
     schema: z.object({ to: z.string().email(), subject: z.string(), body: z.string() }),
     severity: 'HIGH',
   },
-  read_file: {
-    schema: z.object({ path: z.string() }),
-    severity: 'MEDIUM',
-  },
   fetch_url: {
     schema: z.object({ url: z.string().url() }),
     severity: 'LOW',
@@ -16,6 +12,18 @@ export const ToolRegistry = {
   db_query: {
     schema: z.object({ query: z.string() }),
     severity: 'HIGH',
+  },
+  read_file: {
+    schema: z.object({ path: z.string() }),
+    severity: 'MEDIUM',
+  },
+  write_file: {
+    schema: z.object({ path: z.string(), content: z.string() }),
+    severity: 'HIGH',
+  },
+  delete_resource: {
+    schema: z.object({ resource: z.string() }),
+    severity: 'CRITICAL',
   }
 };
 export type ToolName = keyof typeof ToolRegistry;

@@ -7,8 +7,15 @@ const ExecuteSchema = z.object({
   actionId: z.string().uuid(),
 });
 
+const ClientIdSchema = z.string().min(1).max(64).regex(/^[A-Za-z0-9_-]+$/);
+
 export async function POST(req: Request) {
   try {
+    const clientId = ClientIdSchema.safeParse(req.headers.get('x-client-id'));
+    if (!clientId.success) {
+      return NextResponse.json({ error: 'Missing or invalid x-client-id' }, { status: 400 });
+    }
+
     const body = await req.json().catch(() => null);
     const parsed = ExecuteSchema.safeParse(body);
     if (!parsed.success) {
@@ -16,7 +23,7 @@ export async function POST(req: Request) {
     }
 
     const { agentId, actionId } = parsed.data;
-    const result = await executeAction(agentId, actionId);
+    const result = await executeAction(agentId, actionId, { clientId: clientId.data });
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
     const status = error?.statusCode ?? 500;
