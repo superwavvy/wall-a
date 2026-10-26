@@ -239,7 +239,7 @@ export async function executeAction(agentId: string, actionId: string, opts: { c
 
   let result: any;
   try {
-    result = await handler(action.parameters);
+    result = await handler(action.parameters, { clientId: action.clientId });
   } catch (err) {
     await claim(actionId, ['EXECUTING'], 'FAILED');
     await auditLogger.log('ACTION_FAILED', actionId, { error: 'Tool handler error' }, action.clientId);
@@ -249,7 +249,9 @@ export async function executeAction(agentId: string, actionId: string, opts: { c
   await claim(actionId, ['EXECUTING'], 'EXECUTED');
   const safeResult = JSON.parse(JSON.stringify(result ?? {}));
   if (safeResult.message) safeResult.message = maskSensitiveData(safeResult.message);
-  await auditLogger.log('ACTION_EXECUTED', actionId, { result: safeResult }, action.clientId);
+  const logged: any = { ...safeResult };
+  if (typeof logged.data === 'string') logged.data = '[' + logged.data.length + ' chars not logged]';
+  await auditLogger.log('ACTION_EXECUTED', actionId, { result: logged }, action.clientId);
   return result;
 }
 
