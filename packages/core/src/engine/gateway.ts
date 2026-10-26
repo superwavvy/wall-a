@@ -130,6 +130,13 @@ export async function evaluateAction(agentInput: AgentContext, action: ActionReq
     ? { decision: 'BLOCK', reason: 'Workspace is paused by its owner.' }
     : evaluatePolicy(agent, action);
   const risk = calculateRisk(agent, action);
+  // The score we store: a rule-based block is always 100, an approval request at least 30.
+  // (A paused workspace has no rule, so it keeps its calculated score.)
+  const storedScore = policyResult.decision === 'BLOCK' && policyResult.matchedRule
+    ? 100
+    : policyResult.decision === 'REQUIRE_APPROVAL'
+    ? Math.max(risk.score, 30)
+    : risk.score;
   const actionId = randomUUID();
 
   let initialStatus = 'PENDING';
@@ -150,7 +157,7 @@ export async function evaluateAction(agentInput: AgentContext, action: ActionReq
   const row = {
     id: actionId, client_id: tenant, agent_id: agent.agentId, tool_name: action.toolName,
     parameters: (findSecret(action.parameters) ? redactSecrets(action.parameters) : action.parameters) as any, params_hash: paramsHash, status: initialStatus,
-    risk_score: risk.score, reason: taintsSession ? 'Allowed — session now TAINTED' : policyResult.reason,
+    risk_score: storedScore, decision: policyResult.decision, reason: taintsSession ? 'Allowed — session now TAINTED' : policyResult.reason,
     expires_at: new Date(Date.now() + APPROVAL_TTL_MS).toISOString(),
   };
 
@@ -165,7 +172,7 @@ export async function evaluateAction(agentInput: AgentContext, action: ActionReq
   }
 
   await auditLogger.log('ACTION_EVALUATED', actionId, { status: initialStatus, tool: action.toolName }, tenant);
-  return { actionId, decision: policyResult.decision, reason: policyResult.reason, riskScore: risk.score, paramsHash };
+  return { actionId, decision: policyResult.decision, reason: policyResult.reason, riskScore: storedScore, paramsHash };
 }
 
 export async function decideApproval(actionId: string, humanDecision: 'APPROVE' | 'REJECT', opts: { decidedBy?: string; allowedAgentIds?: string[]; clientId?: string } = {}) {
@@ -199,7 +206,7 @@ export async function getRecentActions(clientId?: string) {
     if (error) throw new HttpError('Storage error.', 503);
     return (data || []).map((a: any) => ({
       actionId: a.id, agentId: a.agent_id, toolName: a.tool_name, parameters: a.parameters,
-      status: shown(a.status, a.expires_at), riskScore: a.risk_score, reason: a.reason, paramsHash: a.params_hash, timestamp: a.timestamp, expiresAt: a.expires_at,
+      status: shown(a.status, a.expires_at), decision: a.decision ?? null, riskScore: a.risk_score, reason: a.reason, paramsHash: a.params_hash, timestamp: a.timestamp, expiresAt: a.expires_at,
     }));
   }
 

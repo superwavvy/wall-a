@@ -33,6 +33,7 @@ type Action = {
   riskScore: number;
   reason: string;
   paramsHash: string;
+  decision?: string | null;
   timestamp: string;
 };
 
@@ -50,7 +51,7 @@ type AuthReq =
   | { kind: "decision"; actionId: string; decision: "APPROVE" | "REJECT" }
   | { kind: "clear" };
 
-type Filter = "ALL" | "PENDING" | "APPROVED" | "BLOCKED";
+type Filter = "ALL" | "PENDING" | "APPROVED" | "ALLOWED" | "BLOCKED";
 
 const PILL = "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 ring-inset";
 
@@ -210,12 +211,18 @@ export default function Dashboard() {
     setTimeout(() => setToast(null), 3500);
   };
 
+  const clearActivity = async () => {
+    if (!confirm("Clear recent activity? (Audit logs will be kept)")) return;
+    await fetch("/api/actions/clear", { method: "DELETE", headers: { "x-client-id": getClientId() } });
+    fetchData();
+  };
+
   const fetchData = async () => {
     try {
       const cid = getClientId();
       const [actionsRes, auditRes] = await Promise.all([
-        fetch("/api/approvals", { headers: { "x-client-id": cid } }),
-        fetch("/api/audit", { headers: { "x-client-id": cid } }),
+        fetch("/api/approvals", { headers: { "x-client-id": cid }, cache: "no-store" }),
+        fetch("/api/audit", { headers: { "x-client-id": cid }, cache: "no-store" }),
       ]);
       if (actionsRes.ok) setActions(await actionsRes.json());
       if (auditRes.ok) {
@@ -306,14 +313,21 @@ export default function Dashboard() {
   };
 
   const pending = actions.filter((a) => a.status === "PENDING");
-  const approvedCount = actions.filter((a) => APPROVED_SET.includes(a.status)).length;
-  const allowedCount = actions.filter((a) => a.status === "ALLOWED").length;
+  // passed = it went through. Human = a person approved it. Policy = the rules let it through.
+  // Older rows have no decision saved, so they keep the old rule.
+  const passed = (a: Action) => a.status === "ALLOWED" || APPROVED_SET.includes(a.status);
+  const viaHuman = (a: Action) =>
+    passed(a) && (a.decision ? a.decision === "REQUIRE_APPROVAL" : a.status !== "ALLOWED");
+  const viaPolicy = (a: Action) => passed(a) && !viaHuman(a);
+  const approvedCount = actions.filter(viaHuman).length;
+  const allowedCount = actions.filter(viaPolicy).length;
   const blockedCount = actions.filter((a) => BLOCKED_SET.includes(a.status)).length;
 
   const filtered = actions.filter((a) => {
     if (filter === "ALL") return true;
     if (filter === "PENDING") return a.status === "PENDING";
-    if (filter === "APPROVED") return APPROVED_SET.includes(a.status);
+    if (filter === "APPROVED") return viaHuman(a);
+    if (filter === "ALLOWED") return viaPolicy(a);
     return BLOCKED_SET.includes(a.status);
   });
 
@@ -321,6 +335,7 @@ export default function Dashboard() {
     ALL: actions.length,
     PENDING: pending.length,
     APPROVED: approvedCount,
+    ALLOWED: allowedCount,
     BLOCKED: blockedCount,
   };
 
@@ -352,7 +367,10 @@ export default function Dashboard() {
             >
               <ShieldCheck className="h-4 w-4 text-white" />
             </span>
-            <span className={`text-sm font-semibold tracking-[0.18em] text-white ${MONO}`}>WALL-A</span>
+            <div className="flex flex-col leading-tight">
+              <span className={`text-sm font-semibold tracking-[0.18em] text-white ${MONO}`}>WALL-A</span>
+              <span className={`whitespace-nowrap text-[9px] uppercase tracking-[0.1em] text-[#c4885a] sm:text-[10px] ${MONO}`}>AI Agent Firewall</span>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -495,9 +513,12 @@ export default function Dashboard() {
         {/* ACTIVITY */}
         <section className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-lg font-semibold text-white">Recent activity</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold text-white">Recent activity</h2>
+              <button onClick={clearActivity} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Clear activity</button>
+            </div>
             <div className="flex w-full gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1 sm:w-auto">
-              {(["ALL", "PENDING", "APPROVED", "BLOCKED"] as Filter[]).map((tab) => (
+              {(["ALL", "PENDING", "APPROVED", "ALLOWED", "BLOCKED"] as Filter[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setFilter(tab)}
@@ -660,8 +681,8 @@ export default function Dashboard() {
         </section>
       </main>
 
-      <footer className="border-t border-white/5 py-8 text-center text-xs text-slate-600">
-        © {new Date().getFullYear()} WALL-A Security
+      <footer className="border-t border-white/5 py-8 text-center text-xs text-slate-400">
+        © {new Date().getFullYear()} WALL-A · AI Agent Firewall
       </footer>
 
       {/* TOKEN MODAL */}

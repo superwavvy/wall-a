@@ -1,11 +1,23 @@
 import { generateHash } from './crypto';
 import { supabase, isDbEnabled, auditMemory } from './db';
+import { sign, verify, createPrivateKey, createPublicKey } from 'crypto';
 
 export interface AuditLog {
-  index: number; timestamp: string; actionId: string; event: string; data: any; prevHash: string; entryHash: string; clientId?: string;
+  index: number; timestamp: string; actionId: string; event: string; data: any; prevHash: string; entryHash: string; signature?: string; clientId?: string;
 }
 
 const GENESIS = '0'.repeat(64);
+
+// Load keys from env
+const privHex = process.env.AUDIT_PRIVATE_KEY;
+const pubHex = process.env.AUDIT_PUBLIC_KEY;
+
+const privKey = privHex ? createPrivateKey({ key: Buffer.from(privHex, 'hex'), format: 'der', type: 'pkcs8' }) : null;
+const pubKey = pubHex ? createPublicKey({ key: Buffer.from(pubHex, 'hex'), format: 'der', type: 'spki' }) : null;
+
+if (process.env.NODE_ENV === 'production' && (!privKey || !pubKey)) {
+  console.warn('WALL-A WARNING: Audit signing keys missing. Chain is not cryptographically signed.');
+}
 
 function stable(value: any): any {
   if (Array.isArray(value)) return value.map(stable);
@@ -23,7 +35,11 @@ function hashEntry(e: { clientId: string; index: number; timestamp: string; acti
 
 function build(clientId: string, index: number, timestamp: string, actionId: string, event: string, data: any, prevHash: string): AuditLog {
   const entryHash = hashEntry({ clientId, index, timestamp, actionId, event, data, prevHash });
-  return { clientId, index, timestamp, actionId, event, data, prevHash, entryHash };
+  let signature = undefined;
+  if (privKey) {
+    signature = sign(null, Buffer.from(entryHash, 'hex'), privKey).toString('hex');
+  }
+  return { clientId, index, timestamp, actionId, event, data, prevHash, entryHash, signature };
 }
 
 function memoryChain(clientId: string): any[] {
@@ -61,6 +77,7 @@ class AuditChain {
       const { error } = await supabase!.from('audit_logs').insert({
         client_id: clientId, index: entry.index, timestamp: entry.timestamp, action_id: entry.actionId,
         event: entry.event, data: entry.data, prev_hash: entry.prevHash, entry_hash: entry.entryHash,
+        signature: entry.signature,
       });
 
       if (!error) return entry;
@@ -80,7 +97,7 @@ class AuditChain {
       if (error) return false;
       rows = (data || []).map((l: any) => ({
         clientId: l.client_id, index: Number(l.index), timestamp: new Date(l.timestamp).toISOString(),
-        actionId: l.action_id, event: l.event, data: l.data, prevHash: l.prev_hash, entryHash: l.entry_hash,
+        actionId: l.action_id, event: l.event, data: l.data, prevHash: l.prev_hash, entryHash: l.entry_hash, signature: l.signature,
       }));
     } else {
       rows = (auditMemory as any[]).filter((e) => !clientId || e.clientId === clientId);
@@ -102,6 +119,13 @@ class AuditChain {
         const expectedPrev = i === 0 ? GENESIS : chain[i - 1].entryHash;
         if (cur.prevHash !== expectedPrev) return false;
         if (hashEntry({ ...cur, clientId: k }) !== cur.entryHash) return false;
+        
+        // Verify Signature
+        if (pubKey) {
+          if (!cur.signature) return false; // Fail closed if signature is missing
+          const isValid = verify(null, Buffer.from(cur.entryHash, 'hex'), pubKey, Buffer.from(cur.signature, 'hex'));
+          if (!isValid) return false;
+        }
       }
     }
     return true;
