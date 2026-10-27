@@ -257,11 +257,15 @@ export async function executeAction(agentId: string, actionId: string, opts: { c
 
 export async function resetWorkspace(clientId: string) {
   const tenant = cleanClientId(clientId);
+  const mf: Map<string, string> | undefined = (globalThis as any).__wallaFiles;
+  if (mf) for (const k of Array.from(mf.keys())) if (k.startsWith(tenant + '::')) mf.delete(k);
   if (isDbEnabled) {
     const escaped = tenant.replace(/[\\%_]/g, '\\$&');
     const a = await supabase!.from('actions').delete().eq('client_id', tenant);
     const l = await supabase!.from('audit_logs').delete().eq('client_id', tenant);
     const g = await supabase!.from('agents').delete().like('id', `${escaped}::%`);
+    const wf = await supabase!.from('workspace_files').delete().eq('client_id', tenant);
+    if (wf.error) throw new HttpError('Reset failed.', 500);
     if (a.error || l.error || g.error) throw new HttpError('Reset failed.', 503);
     return { success: true };
   }

@@ -25,12 +25,14 @@ export async function DELETE(req: Request) {
         actionMemory.clear();
         agentMemory.clear();
         auditMemory.length = 0;
+        (globalThis as any).__wallaFiles?.clear();
         return NextResponse.json({ success: true, mode: 'memory', scope: 'all' });
       }
       const a = await supabase!.from('actions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       const l = await supabase!.from('audit_logs').delete().gte('index', 0);
       const g = await supabase!.from('agents').delete().neq('id', 'none');
-      if (a.error || l.error || g.error) {
+      const w = await supabase!.from('workspace_files').delete().neq('client_id', '');
+      if (a.error || l.error || g.error || w.error) {
         return NextResponse.json({ error: 'Reset failed' }, { status: 500 });
       }
       return NextResponse.json({ success: true, mode: 'database', scope: 'all' });
