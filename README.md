@@ -158,3 +158,4 @@ There are no user accounts yet. A workspace is identified by an ID stored in the
 
 Secrets that are base64-encoded or split across fields are not detected, and content returned by `fetch_url` is not scanned.
 
+[![M8ven Score](https://m8ven.ai/badge/mcp/superwavvy-wall-a-18yrsp?v=dea178b453cc5aaf3c2d8fbda1f88e54)](https://m8ven.ai/mcp/superwavvy-wall-a-18yrsp?s=readme)
